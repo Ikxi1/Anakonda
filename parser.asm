@@ -53,11 +53,16 @@ compare_token:
 	lea r9, [token_buffer]
 	lea r10, [py_print]
 compare_token_loop:
-	mov al, byte [r9+r12]
-	mov r15b, byte [r10+r12]
+	mov al, byte [r9]
+	mov r15b, byte [r10]
 
+	; if there is an instruction or variable
+	; named the same but more characters at
+	; the end this will not fail, because
+	; it checks until the end of the
+	; token_buffer, not the instruction buffer
 	cmp al, 0
-	jz print
+	jz Lpy_print
 
 	inc r9
 	inc r10
@@ -69,12 +74,27 @@ compare_token_loop:
 jmp exit
 
 Lpy_print:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [anakonda]
-	mov rdx, anakonda_len
-	syscall
-	jmp exit
+	; takes r9 as token_buffer
+
+	; test for parantheses()
+	inc r9
+	mov al, byte [r9]
+	mov bl, "("
+	cmp al, bl
+	jnz exit_print_paran
+	
+	; test if "string" or not
+	inc r9
+	mov al, byte [r9]
+	cmp al, 34 ; "
+	mov r15, rip
+	jz string_to_print_buffer
+	cmp al, 39 ; '
+	jz string_to_print_buffer
+	jnz something_else
+
+string_to_print_buffer:
+
 
 
 ; all the different exits
@@ -119,6 +139,14 @@ exit_wrong_ins:
 	mov rdx, wrong_ins_len
 	syscall
 
+exit_print_paran:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [print_paran]
+	mov rdx, print_paran_len
+	syscall
+
+something_else:
 exit:
 	mov rax, 60
 	xor rdi, rdi
@@ -154,3 +182,6 @@ section .data
 
 	py_print db "print", 0
 	py_print_len equ $ - py_print
+
+	print_paran db "You forgot the (.", 10
+	print_paran_len equ $ - print_paran
