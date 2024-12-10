@@ -29,9 +29,13 @@ _start:
 	mov r8, rax
 	xor r9, r9
 
+
+; read file piece by piece
+
+
 read_file_buffer:
 	cmp r8, 0
-	jz write_file_buffer
+	jz compare_token
 
 	mov al, [file_buffer+r9]
 	cmp al, "a"
@@ -45,19 +49,9 @@ read_file_buffer:
 	dec r8
 	jmp read_file_buffer
 
-; currently unused
-write_file_buffer:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [token_buffer]
-	mov rdx, token_buffer_size
-	syscall
-	jmp exit
-
 compare_token:
 	lea r9, [token_buffer]
 	lea r10, [py_print]
-
 compare_token_loop:
 	mov al, byte [r9+r12]
 	mov r15b, byte [r10+r12]
@@ -74,7 +68,7 @@ compare_token_loop:
 
 jmp exit
 
-print:
+Lpy_print:
 	mov rax, 1
 	mov rdi, 1
 	lea rsi, [anakonda]
@@ -82,7 +76,9 @@ print:
 	syscall
 	jmp exit
 
+
 ; all the different exits
+
 
 exit_no_file:
 	mov rax, 1
@@ -153,7 +149,7 @@ section .data
 	empty_file db "The specified file is empty.", 10
 	empty_file_len equ $ - empty_file
 
-	wrong_ins db "Unrecognized instruction.", 10
+	wrong_ins db "Recognized unrecognized instruction.", 10
 	wrong_ins_len equ $ - wrong_ins
 
 	py_print db "print", 0

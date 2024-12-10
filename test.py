@@ -1,1 +1,1 @@
-pritn
+print
