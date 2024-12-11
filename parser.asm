@@ -50,10 +50,10 @@ read_file_buffer:
 	jmp read_file_buffer
 
 compare_token:
-	lea r9, [token_buffer]
+	lea r14, [token_buffer]
 	lea r10, [py_print]
 compare_token_loop:
-	mov al, byte [r9]
+	mov al, byte [r14]
 	mov r15b, byte [r10]
 
 	; if there is an instruction or variable
@@ -62,53 +62,81 @@ compare_token_loop:
 	; it checks until the end of the
 	; token_buffer, not the instruction buffer
 	cmp al, 0
-	jz Lpy_print
+	jne compare_token_loop_continue
+	call Lpy_print
 
-	inc r9
+	jmp exit
+
+compare_token_loop_continue:
+	inc r14
 	inc r10
 
 	cmp al, r15b
 	jz compare_token_loop
 	jnz exit_wrong_ins
 
-jmp exit
-
 Lpy_print:
-	; takes r9 as token_buffer
+	; takes r9 as file_buffer
 
 	; test for parantheses()
-	inc r9
-	mov al, byte [r9]
-	mov bl, "("
-	cmp al, bl
+	cmp byte [file_buffer+r9], 40 ; (
 	jnz exit_print_paran
 	
 	; test if "string" or not
 Lpy_print_compare1:
 	inc r9
-	mov al, byte [r9]
-	cmp al, 34 ; "
-	jne Lpy_print_compare2
+	cmp byte [file_buffer+r9], 34 ; "
+	jne Lpy_print_compare2 ; instead of jumping to check )
+	; it needs to read a variable or function
 	call string_to_print_buffer
 Lpy_print_compare2:
-	cmp al, 39 ; '
-	jne something_else
-	call string_to_print_buffer
+	inc r9
+	cmp byte [file_buffer+r9], 41 ; )
+	jne exit_print_paran3
+
+	call fun_print
+
+	ret
 
 string_to_print_buffer:
 	; should push values onto stack
 	; theoretically
 	; r9 contains token_buffer
 	; read string and put in print_buffer
+	xor r15, r15
+string_to_print_buffer_loop:
 	inc r9
-	cmp byte [r9], 34 ; "
+	cmp byte [file_buffer+r9], 41 ; )
+	je exit_print_paran2
+	cmp byte [file_buffer+r9], 34 ; "
 	je Lret
-	cmp byte [r9], 39 ; '
+	cmp byte [file_buffer+r9], 39 ; '
 	je Lret
-	mov byte [r9], [print_buffer]
+	mov al, byte [file_buffer+r9]
+	mov [print_buffer+r15], al
 	
+	je exit_print_paran2
+	cmp byte [file_buffer+r9], 34 ; "
+	je Lret
+	cmp byte [file_buffer+r9], 39 ; '
+	je Lret
+	mov al, byte [file_buffer+r9]
+	mov [print_buffer+r15], al
+	inc r15
+	jmp string_to_print_buffer_loop
 
 Lret:
+	ret
+
+; all the different in-built functions
+
+
+fun_print:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [print_buffer]
+	mov rdx, print_buffer_size
+	syscall
 	ret
 
 
@@ -153,6 +181,7 @@ exit_wrong_ins:
 	lea rsi, [wrong_ins]
 	mov rdx, wrong_ins_len
 	syscall
+	jmp exit
 
 exit_print_paran:
 	mov rax, 1
@@ -160,8 +189,31 @@ exit_print_paran:
 	lea rsi, [print_paran]
 	mov rdx, print_paran_len
 	syscall
+	jmp exit
+
+exit_print_paran2:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [print_paran2]
+	mov rdx, print_paran2_len
+	syscall
+	jmp exit
+
+exit_print_paran3:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [print_paran3]
+	mov rdx, print_paran3_len
+	syscall
+	jmp exit
 
 something_else:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [undefined]
+	mov rdx, undefined_len
+	syscall
+
 exit:
 	mov rax, 60
 	xor rdi, rdi
@@ -196,8 +248,17 @@ section .data
 	wrong_ins db "Recognized unrecognized instruction.", 10
 	wrong_ins_len equ $ - wrong_ins
 
+	undefined db "Undefined error", 10
+	undefined_len equ $ - undefined
+
 	py_print db "print", 0
 	py_print_len equ $ - py_print
 
 	print_paran db "You forgot the (.", 10
 	print_paran_len equ $ - print_paran
+
+	print_paran2 db "You forgot the quotes before the ).", 10
+	print_paran2_len equ $ - print_paran2
+
+	print_paran3 db "You forgot the ).", 10
+	print_paran3_len equ $ - print_paran3
