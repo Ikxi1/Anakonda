@@ -84,17 +84,32 @@ Lpy_print:
 	jnz exit_print_paran
 	
 	; test if "string" or not
+Lpy_print_compare1:
 	inc r9
 	mov al, byte [r9]
 	cmp al, 34 ; "
-	mov r15, rip
-	jz string_to_print_buffer
+	jne Lpy_print_compare2
+	call string_to_print_buffer
+Lpy_print_compare2:
 	cmp al, 39 ; '
-	jz string_to_print_buffer
-	jnz something_else
+	jne something_else
+	call string_to_print_buffer
 
 string_to_print_buffer:
+	; should push values onto stack
+	; theoretically
+	; r9 contains token_buffer
+	; read string and put in print_buffer
+	inc r9
+	cmp byte [r9], 34 ; "
+	je Lret
+	cmp byte [r9], 39 ; '
+	je Lret
+	mov byte [r9], [print_buffer]
+	
 
+Lret:
+	ret
 
 
 ; all the different exits
@@ -156,11 +171,12 @@ exit:
 section .bss
 	file_buffer resb 4096
 	token_buffer resb 64
+	print_buffer resb 64
 
 section .data
 	file_buffer_size equ 4096
-
 	token_buffer_size equ 64
+	print_buffer_size equ 64
 
 	anakonda db "Anakonda", 10
 	anakonda_len equ $ - anakonda
