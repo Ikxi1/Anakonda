@@ -62,18 +62,49 @@ compare_token_loop:
 	; it checks until the end of the
 	; token_buffer, not the instruction buffer
 	cmp al, 0
-	jne compare_token_loop_continue
+	jne compare_token_loop2
 	call Lpy_print
 
 	jmp exit
 
-compare_token_loop_continue:
+compare_token_loop2:
 	inc r14
 	inc r10
 
 	cmp al, r15b
 	jz compare_token_loop
-	jnz exit_wrong_ins
+
+compare_token_declaration:
+	; check if it's a variable or function declarations
+	lea r14, [token_buffer]
+compare_token_declaration_loop:
+	cmp byte [r14], 32 ; space " "
+	jz declare_variable
+	cmp byte [r14], 40 ; (
+	jz declare_function
+	inc r14
+	jmp compare_token_declaration_loop
+
+declare_variable:
+	inc r14
+	cmp byte [r14], 61 ; =
+	jnz exit_declaration_fail
+	inc r14
+	cmp byte [r14], 40 ; space " "
+	jnz exit_declaration_fail
+	xor r13, r13
+declare_variable_load:
+	inc r14
+	mov al, byte [r14]
+	cmp al, 34 ; "x
+	mov [variable_buffer+r13], al
+
+
+
+
+declare_function:
+	jmp exit
+
 
 Lpy_print:
 	; takes r9 as file_buffer
@@ -114,7 +145,7 @@ Lpy_print_buffer_loop:
 	je Lret
 	mov al, byte [file_buffer+r9]
 	mov [print_buffer+r15], al
-	
+
 	je exit_print_paran2
 	cmp byte [file_buffer+r9], 34 ; "
 	je Lret
@@ -211,6 +242,12 @@ exit_print_paran3:
 	syscall
 	jmp exit
 
+exit_declaration_fail:
+	mov rax, 1
+	mov rdi, 1
+	lea rsi, [declaration_fail]
+	mov rdx, declaration_fail_len
+
 something_else:
 	mov rax, 1
 	mov rdi, 1
@@ -228,11 +265,13 @@ section .bss
 	file_buffer resb 4096
 	token_buffer resb 64
 	print_buffer resb 64
+	variable_buffer resb 64
 
 section .data
 	file_buffer_size equ 4096
 	token_buffer_size equ 64
 	print_buffer_size equ 64
+	variable_buffer_size equ 64
 
 	anakonda db "Anakonda", 10
 	anakonda_len equ $ - anakonda
@@ -266,3 +305,6 @@ section .data
 
 	print_paran3 db "You forgot the ).", 10
 	print_paran3_len equ $ - print_paran3
+
+	declaration_fail db "Failed to declare variable or function.", 10
+	declaration_fail_len equ $ - declaration_fail

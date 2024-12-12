@@ -1,1 +1,1 @@
-print("Anakonda")
+a = 100
