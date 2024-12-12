@@ -88,7 +88,7 @@ Lpy_print_compare1:
 	cmp byte [file_buffer+r9], 34 ; "
 	jne Lpy_print_compare2 ; instead of jumping to check )
 	; it needs to read a variable or function
-	call string_to_print_buffer
+	call Lpy_print_buffer
 Lpy_print_compare2:
 	inc r9
 	cmp byte [file_buffer+r9], 41 ; )
@@ -98,13 +98,13 @@ Lpy_print_compare2:
 
 	ret
 
-string_to_print_buffer:
+Lpy_print_buffer:
 	; should push values onto stack
 	; theoretically
 	; r9 contains token_buffer
 	; read string and put in print_buffer
 	xor r15, r15
-string_to_print_buffer_loop:
+Lpy_print_buffer_loop:
 	inc r9
 	cmp byte [file_buffer+r9], 41 ; )
 	je exit_print_paran2
@@ -123,7 +123,7 @@ string_to_print_buffer_loop:
 	mov al, byte [file_buffer+r9]
 	mov [print_buffer+r15], al
 	inc r15
-	jmp string_to_print_buffer_loop
+	jmp Lpy_print_buffer_loop
 
 Lret:
 	ret
@@ -132,6 +132,10 @@ Lret:
 
 
 fun_print:
+	; add newline to the buffer
+	inc r9
+	mov al, 10
+	mov [print_buffer+r9], al
 	mov rax, 1
 	mov rdi, 1
 	lea rsi, [print_buffer]
