@@ -6,6 +6,7 @@ _start:
 	mov rax, 2
 	mov rdi, [rsp + 16]
 	test rdi, rdi
+	js exit_no_file
 	cmp rdi, 0
 	jz exit_no_file
 	mov rsi, 0
@@ -76,9 +77,11 @@ compare_token_loop2:
 
 compare_token_declaration:
 	; check if it's a variable or function declarations
+	; ERROR TOKEN_BUFFER ONLY GOES UP TO lowercase letters
+	; ANY OTHER SYMBOL IS NOT IN TOKEN_BUFFER
 	lea r14, [token_buffer]
 compare_token_declaration_loop:
-	cmp byte [r14], 32 ; space " "
+	cmp byte [r14], 61 ; =
 	jz declare_variable
 	cmp byte [r14], 40 ; (
 	jz declare_function
@@ -308,3 +311,9 @@ section .data
 
 	declaration_fail db "Failed to declare variable or function.", 10
 	declaration_fail_len equ $ - declaration_fail
+
+	debut db "debut", 0
+	debut_len equ $ - debut
+
+	graduate db "graduate", 0
+	graduate_len equ $ - graduate
