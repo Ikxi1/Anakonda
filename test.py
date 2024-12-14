@@ -1,1 +1,1 @@
-a = 100
+print("Anakonda")
