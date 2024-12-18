@@ -1,3 +1,4 @@
+%include "common.inc"
 section .text
 global _start
 
@@ -15,6 +16,7 @@ _start:
 	test rax, rax
 	js exit_bad_file
 
+read_file:
 	mov rdi, rax
 	mov r10, rax
 
@@ -99,10 +101,8 @@ declare_variable:
 declare_variable_load:
 	inc r14
 	mov al, byte [r14]
-	cmp al, 34 ; "x
+	cmp al, 34 ; "
 	mov [variable_buffer+r13], al
-
-
 
 
 declare_function:
@@ -161,159 +161,3 @@ Lpy_print_buffer_loop:
 
 Lret:
 	ret
-
-; all the different in-built functions
-
-
-fun_print:
-	; add newline to the buffer
-	inc r9
-	mov al, 10
-	mov [print_buffer+r9], al
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [print_buffer]
-	mov rdx, print_buffer_size
-	syscall
-	ret
-
-
-; all the different exits
-
-
-exit_no_file:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [no_file]
-	mov rdx, no_file_len
-	syscall
-	jmp exit
-
-exit_bad_file:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [bad_file]
-	mov rdx, bad_file_len
-	syscall
-	jmp exit
-
-exit_read_fail:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [read_fail]
-	mov rdx, read_fail_len
-	syscall
-	jmp exit
-
-exit_empty_file:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [empty_file]
-	mov rdx, empty_file_len
-	syscall
-	jmp exit
-
-exit_wrong_ins:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [wrong_ins]
-	mov rdx, wrong_ins_len
-	syscall
-	jmp exit
-
-exit_print_paran:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [print_paran]
-	mov rdx, print_paran_len
-	syscall
-	jmp exit
-
-exit_print_paran2:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [print_paran2]
-	mov rdx, print_paran2_len
-	syscall
-	jmp exit
-
-exit_print_paran3:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [print_paran3]
-	mov rdx, print_paran3_len
-	syscall
-	jmp exit
-
-exit_declaration_fail:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [declaration_fail]
-	mov rdx, declaration_fail_len
-
-something_else:
-	mov rax, 1
-	mov rdi, 1
-	lea rsi, [undefined]
-	mov rdx, undefined_len
-	syscall
-
-exit:
-	mov rax, 60
-	xor rdi, rdi
-	syscall
-
-
-section .bss
-	file_buffer resb 4096
-	token_buffer resb 64
-	print_buffer resb 64
-	variable_buffer resb 64
-
-section .data
-	file_buffer_size equ 4096
-	token_buffer_size equ 64
-	print_buffer_size equ 64
-	variable_buffer_size equ 64
-
-	anakonda db "Anakonda", 10
-	anakonda_len equ $ - anakonda
-
-	no_file db "Specify a file as the first argument.", 10
-	no_file_len equ $ - no_file
-
-	bad_file db "Couldn't open the file.", 10
-	bad_file_len equ $ - bad_file
-
-	read_fail db "Couldn't read the file.", 10
-	read_fail_len equ $ - read_fail
-
-	empty_file db "The specified file is empty.", 10
-	empty_file_len equ $ - empty_file
-
-	wrong_ins db "Recognized unrecognized instruction.", 10
-	wrong_ins_len equ $ - wrong_ins
-
-	undefined db "Undefined error", 10
-	undefined_len equ $ - undefined
-
-	py_print db "print", 0
-	py_print_len equ $ - py_print
-
-	print_paran db "You forgot the (.", 10
-	print_paran_len equ $ - print_paran
-
-	print_paran2 db "You forgot the quotes before the ).", 10
-	print_paran2_len equ $ - print_paran2
-
-	print_paran3 db "You forgot the ).", 10
-	print_paran3_len equ $ - print_paran3
-
-	declaration_fail db "Failed to declare variable or function.", 10
-	declaration_fail_len equ $ - declaration_fail
-
-	debut db "debut", 0
-	debut_len equ $ - debut
-
-	graduate db "graduate", 0
-	graduate_len equ $ - graduate
